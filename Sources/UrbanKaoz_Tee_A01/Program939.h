@@ -1,0 +1,22 @@
+#pragma once
+// DEF uses 0 = Off. Legacy per-pattern bytes remain readable; IND overrides live in ind50.
+uint8_t programDefault939[16]={},programPattern939[16][16]={};
+static uint8_t stageDefault939[16],stagePattern939[16][16],stageDir939[16];
+FLASHMEM uint8_t programFocus51(uint8_t t){return patternMode&&lastPatternValid&&lastPatternTrack==t?lastPatternIndex:activePattern[t];}
+FLASHMEM uint8_t programValue939(uint8_t t,uint8_t p){return indBase50(t,p,LOCK_PROGRAM26,t,0,programDefault939[t]);}
+FLASHMEM void programSend939(uint8_t t,uint8_t p){uint8_t v=programValue939(t,p);if(v){uint8_t masks[16]={};for(uint8_t b=0;b<3;++b){auto r=blockAtNote21(t,b,p,-1,255);if(r.port)masks[r.channel]|=1u<<(r.port-1);}for(uint8_t ch=0;ch<16;++ch)if(masks[ch]){MidiScope902 route(masks[ch],t);midiRaw810(0xC0|ch,v-1,0);}}if(Serial)Serial.printf("SKPRG,%u,%u,%d,%u\n",t,p,(int)v-1,midiChannelForTrack(t));}
+FLASHMEM void programAll28(){for(uint8_t t=0;t<16;++t)programSend939(t,activePattern[t]);} FLASHMEM void programDisplay939(){uint8_t v=indEditing59()?programValue939(selectedTrack,programFocus51(selectedTrack)):programDefault939[selectedTrack];DISPLAY_SERIAL.println("FIELD,0,T,PRG");DISPLAY_SERIAL.print("FIELD,0,V,");if(v)DISPLAY_SERIAL.println(v);else DISPLAY_SERIAL.println("Off");}
+FLASHMEM void programEdit939(int delta,bool inherit,bool off){
+ bool selected=selectedPatternCount()!=0;uint16_t touched=0;unsigned need=0;uint8_t before51[16];for(uint8_t t=0;t<16;++t)before51[t]=programValue939(t,activePattern[t]);
+ for(uint8_t t=0;t<16;++t)for(uint8_t p=0;p<16;++p)if(selected?patternSelected[t][p]:(t==selectedTrack&&p==programFocus51(t)))if(indEnabled59(t,p)&&ind50.find(t*16+p,IND_PATCH50,LOCK_PROGRAM26,0,0)<0)++need;
+ if(!inherit&&ind50.count+need>IndStore50::CAPACITY){DISPLAY_SERIAL.println("MSG|IND MEMORY FULL");return;}
+ for(uint8_t t=0;t<16;++t){int base=programDefault939[t];bool def=false;for(uint8_t p=0;p<16;++p)if(selected?patternSelected[t][p]:(t==selectedTrack&&p==programFocus51(t))){touched|=1u<<t;if(indEnabled59(t,p)){if(inherit)ind50.remove(t*16+p,IND_PATCH50,LOCK_PROGRAM26,0,0);else ind50.set(t*16+p,IND_PATCH50,LOCK_PROGRAM26,0,0,off?0:WRAP23(indBase50(t,p,LOCK_PROGRAM26,t,0,base),delta,0,128));}else def=true;}
+ if(def&&!inherit)programDefault939[t]=off?0:WRAP23(base,delta,0,128);}
+ indChanged50();for(uint8_t t=0;t<16;++t)if((touched&(1u<<t))&&before51[t]!=programValue939(t,activePattern[t])){programSend939(t,activePattern[t]);if(patchRecallMask54&(1u<<t))for(uint8_t b=0;b<3;++b){BlockScope21 block(b);indPatchRefresh51(t);}}programDisplay939();displayValueDirty=true;
+}
+FLASHMEM void programMenu939(){char a[21],b[21];snprintf(a,21,"TRACK %02u PROGRAM",selectedTrack+1);int value=!patternMode&&lockWantsEdit817()?lockDisplay817(LOCK_PROGRAM26,selectedTrack,0,programValue939(selectedTrack,programFocus51(selectedTrack))):(indEditing59()?programValue939(selectedTrack,programFocus51(selectedTrack)):programDefault939[selectedTrack]);if(value)snprintf(b,21,"PRG %u (1..128)",value);else strcpy(b,"PRG Off");sendMenuScreen(a,b,"OA: value","Off                 ");}
+FLASHMEM void programReset939(){memset(programDefault939,0,sizeof(programDefault939));memset(programPattern939,0,sizeof(programPattern939));memset(rollDir939,0,sizeof(rollDir939));}
+FLASHMEM bool programWrite939(File&f){uint16_t count=0;for(auto&row:programPattern939)for(auto v:row)if(v)++count;if(f.write(programDefault939,16)!=16||f.write(rollDir939,16)!=16||f.write((uint8_t*)&count,2)!=2)return false;for(uint8_t t=0;t<16;++t)for(uint8_t p=0;p<16;++p)if(programPattern939[t][p]){uint8_t b[]={t,p,programPattern939[t][p]};if(f.write(b,3)!=3)return false;}return true;}
+FLASHMEM bool programRead939(File&f,bool present){memset(stageDefault939,0,sizeof(stageDefault939));memset(stagePattern939,0,sizeof(stagePattern939));memset(stageDir939,0,sizeof(stageDir939));if(!present)return true;uint16_t count;if(f.read(stageDefault939,16)!=16||f.read(stageDir939,16)!=16||f.read((uint8_t*)&count,2)!=2||count>256)return false;for(uint8_t t=0;t<16;++t)if(stageDefault939[t]>128||stageDir939[t]>2)return false;while(count--){uint8_t b[3];if(f.read(b,3)!=3||b[0]>15||b[1]>15||!b[2]||b[2]>129||stagePattern939[b[0]][b[1]])return false;stagePattern939[b[0]][b[1]]=b[2];}return true;}
+FLASHMEM void programInstall939(){memcpy(programDefault939,stageDefault939,16);memcpy(programPattern939,stagePattern939,256);memcpy(rollDir939,stageDir939,16);}
+

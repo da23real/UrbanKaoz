@@ -1,0 +1,23 @@
+#pragma once
+enum KbTypeR10 : uint8_t {KB_NOT_R10,KB_AH_R10,KB_MOD_R10,KB_DLY_R10,KB_CC_R10};
+struct KbZoneR10 {int32_t center=36,range=1,value=36;uint32_t target=0;uint8_t type=0,parameter=0,mute=0,valid=0;};
+struct KbTrackR10 {uint8_t split=0,panels=0;KbZoneR10 zone[4];};
+KbTrackR10 kbTracksR10[16];
+EXTMEM KbTrackR10 kbStageR10[16];
+uint8_t kbColorsR10[4]={5,2,8,4};bool kbSelectHearR10=false;
+uint8_t kbMenuR10=0;bool kbMenuTrackR10=false;
+bool kbZoneViewR11=false;
+bool kbZoneContextR11();
+bool epRefreshR10=false;
+struct EpRefreshR10 {~EpRefreshR10(){epRefreshR10=true;}};
+void kbSongRemoveR10(uint32_t);void kbSongPitchR10(uint32_t,uint8_t);
+void manualModStart06(uint8_t,uint8_t,uint32_t);void manualModStop06(uint8_t,uint8_t);
+bool manualModActive06(uint16_t);
+void kbAuditionR10(uint8_t,uint8_t,const NoteLock817*,uint8_t);
+void kbResetR10();void kbOpenR10(bool);void kbRenderMenuR10();bool kbRoyR10(uint8_t,int,bool);bool kbScreenR10(uint8_t);bool kbBackR10();
+bool kbDisplayR10();bool kbKyR10(uint8_t,int,bool);bool kbKeyR10(uint8_t,bool);
+uint8_t kbZoneForR10(uint8_t,uint8_t,uint8_t);uint8_t kbPositionR10(uint8_t,uint8_t,uint8_t);
+uint8_t kbSnapshotR10(uint8_t,NoteLock817*);bool kbStoreR10(uint8_t,uint8_t,int32_t,uint8_t,const NoteLock817*,uint8_t);
+void kbStepR10(uint8_t,uint16_t,uint8_t);void kbLiveR10(uint8_t,uint8_t,uint8_t,const NoteLock817*,uint8_t);
+bool kbPressR10(uint8_t,uint8_t,uint8_t&,NoteLock817*,uint8_t&);bool kbSelectR10(uint8_t,bool,uint8_t,const NoteLock817*,uint8_t);
+bool kbWriteR10(File&);bool kbReadR10(File&,bool);void kbInstallR10();void kbPrefsLoadR10();void kbPrefsSaveR10();

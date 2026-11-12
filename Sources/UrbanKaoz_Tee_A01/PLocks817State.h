@@ -1,0 +1,78 @@
+#pragma once
+// Sparse note locks, independent of the legacy pattern binary layout.
+// Note identity is its unmodulated logical onset and MIDI pitch in its pattern.
+enum LockKind817 : uint8_t { LOCK_CC817, LOCK_MOD817, LOCK_DEPTH817,
+  LOCK_EXTRA817, LOCK_RAT817, LOCK_DELAY817, LOCK_NRPN7817, LOCK_NRPN14817, LOCK_ROLL1000, LOCK_PROGRAM26, LOCK_BLOCK21 };
+struct NoteLock817 {
+  int32_t tick, value;
+  uint16_t target, parameter;
+  uint8_t track, pattern, note, kind;
+  uint32_t duration=0; // note >=128: independent event, low 7 bits = display pitch
+};
+static const uint16_t LOCK_CAPACITY817=2048;
+EXTMEM NoteLock817 noteLocks817[LOCK_CAPACITY817],fullLocks817[LOCK_CAPACITY817];
+uint16_t lockCount817=0,fullLockCount817=0;
+bool lockRelease817=false;
+uint16_t lockPlaybackCount39();
+const NoteLock817& lockPlaybackEntry39(int);
+bool lockPlaybackDraft39(int);
+void lockClearDraft39();
+bool lockEdit817(uint8_t kind,uint16_t target,uint16_t parameter,int base,int delta,int minimum,int maximum);
+int lockValue817(uint8_t kind,uint16_t target,uint16_t parameter,int base);
+int lockDisplay817(uint8_t kind,uint16_t target,uint16_t parameter,int base);
+void lockBegin817(uint8_t track,uint8_t pattern,int32_t tick,uint8_t originalNote,uint8_t channel,uint8_t note,uint32_t gateUs);
+void lockOff817(uint8_t channel,uint8_t note);
+void lockService817();
+void lockStop817();
+void lockReset817();
+void lockCopyPattern817(uint8_t ft,uint8_t fp,uint8_t tt,uint8_t tp);
+void lockClearPattern817(uint8_t track,uint8_t pattern);
+void lockPrune817(uint8_t track,uint8_t pattern);
+void lockRemoveNote817(uint8_t track,uint16_t step,uint8_t voice);
+void lockPitch817(uint8_t track,uint16_t step,uint8_t voice,uint8_t pitch);
+void lockMove817(uint8_t track,int32_t tick,uint8_t pitch,int32_t destination);
+void lockUndoCapture817(uint8_t index,uint8_t track,uint16_t step,uint8_t voice);
+bool lockUndoRoom817(uint8_t index);
+void lockUndoInstall817(uint8_t index);
+void lockUndoShift817();
+bool lockMoving817=false;
+int lockMidiOffer817(uint8_t channel,uint16_t object,int value);
+void lockSettingsOpen817();
+void lockSettingsSave817();
+void lockSettingsLoad817();
+bool lockValid817(const NoteLock817&l);
+void checks817();
+void checksFiles817();
+bool lockWantsEdit817();
+bool freeDraftFinish25(bool);
+int lockDraftValue26(const NoteLock817&,int);
+int lockDraftIndex26(const NoteLock817&);
+bool lockDraftPut26(const NoteLock817&,bool);
+bool lockDraftRoom26(uint16_t);
+bool lockDraftAny26();
+bool lockHoldEdge26(uint8_t,bool);
+void lockHoldTurn26(uint8_t);
+void lockHoldService26();
+void lockHoldCancel26();
+uint8_t programValue939(uint8_t,uint8_t);
+bool freeEdit11(uint8_t,uint16_t,uint16_t,int,int,int,int);
+bool freeGateEdit11(int,bool=false);
+int freeGateValue11();
+void freePlayTrack11(uint8_t,uint32_t,uint8_t=255);
+void freeDelaySnapshot11(uint8_t);
+bool freeDelayHas11(uint8_t);
+int32_t lockTick817(uint8_t,uint16_t,uint8_t);
+int lockFind817(uint8_t,uint8_t,int32_t,uint8_t,uint8_t,uint16_t,uint16_t);
+extern NoteLock817 lockUndo817[2][LOCK_CAPACITY817];extern uint16_t lockUndoCount817[2];
+extern bool targetLocked11;
+int lockOriginal11(uint8_t,uint16_t,uint16_t,int);
+bool freeAtPad11(uint8_t,uint8_t,uint32_t,uint32_t);
+bool freeDeletePad11(uint8_t,uint8_t,uint32_t,uint32_t);
+bool freeTail11(uint8_t,uint8_t,uint32_t,uint32_t);
+void freeInvalidate11();
+bool freeDeleteSelected11();
+int32_t freeTick11(uint8_t,uint8_t,uint32_t,uint32_t);
+int freeDisplay11(uint8_t,uint16_t,uint16_t,int);
+void lockBlinkSend11(uint8_t,uint16_t);
+void deleteCancel55();bool deleteKey55(uint8_t,bool);void deleteService55();
+bool lockDifferent11(uint8_t,uint16_t,uint16_t,int);

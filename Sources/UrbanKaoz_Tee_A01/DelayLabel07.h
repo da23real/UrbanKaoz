@@ -1,0 +1,3 @@
+#pragma once
+FLASHMEM void delayLabelRender07(){if(delayLabelMenu07==1){sendMenuScreen("Pidi","","Delay channel","");return;}char value[8];if(delayLabelChannel07)snprintf(value,8,"%02u",delayLabelChannel07);else strcpy(value,"off");sendMenuScreen("send delay label as CC",value,"","");}
+FLASHMEM bool delayLabelRoy07(uint8_t roy,int delta,bool click){if(!delayLabelMenu07)return false;if(roy==0){if(delayLabelMenu07==1&&click)delayLabelMenu07=2;else if(delayLabelMenu07==2&&delta){delayLabelChannel07=clampInt((int)delayLabelChannel07+delta,0,16);uint8_t data[]={0xD7,delayLabelChannel07};EEPROM.put(3730,data);pidiPacket827(pidi827::LABEL07,&delayLabelChannel07,1);}delayLabelRender07();}return true;}

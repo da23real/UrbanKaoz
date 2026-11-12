@@ -1,0 +1,46 @@
+#pragma once
+struct MoveNote939 {FineNoteEvent event;int32_t tick;bool selected;};
+struct MoveSnapshot939 {AutoMute46*mutes=nullptr;uint16_t muteCount=0;MoveNote939* notes=nullptr;NoteLock817* locks=nullptr;uint16_t count=0,lockCount=0;uint8_t track=255,pattern=255;};
+static MoveSnapshot939 moveBefore939,moveAfter939;static bool moveUndone939=false;
+static int32_t moveValue939=0; int moveDisplay939(){return moveValue939;}
+FLASHMEM bool movePlace939(uint8_t t,const FineNoteEvent&e){uint16_t s=e.step;if(s>=STEP_COUNT)return false;if(!stepActive[t][s]){DeletedNoteUndoRecord r{};r.track=t;r.event=e;return restoreDeletedNote(r);}FineNoteEvent base{};captureNoteRecord(t,s,0,base);if(stepExtraNoteCount[t][s]<EXTRA_NOTES_PER_STEP&&base.logicalMicro==e.logicalMicro&&base.micro==e.micro&&base.vel==e.vel&&base.gate==e.gate&&((base.pxMask^e.pxMask)&~PX_PITCH)==0&&sameRollSettings(base.roll,e.roll)){stepExtraMidiNote[t][s][stepExtraNoteCount[t][s]++]=e.note;return true;}for(uint8_t i=0;i<FINE_EVENTS_PER_TRACK;++i)if(!fineNote[t][i].active){fineNote[t][i]=e;return true;}return false;}
+FLASHMEM void moveFree939(MoveSnapshot939&s){extmem_free(s.notes);extmem_free(s.locks);extmem_free(s.mutes);s={};}
+FLASHMEM bool moveCapture939(uint8_t t,MoveSnapshot939&s){moveFree939(s);s.track=t;s.pattern=activePattern[t];for(uint16_t k=0;k<trackStepCount(t);++k)s.count+=noteCountAtStep(t,k);for(uint16_t i=0;i<lockCount817;++i)if(noteLocks817[i].track==t&&noteLocks817[i].pattern==s.pattern)++s.lockCount;
+ for(uint16_t i=0;i<autoMuteCount46;++i)if(autoMutes46[i].track==t&&autoMutes46[i].pattern==s.pattern)++s.muteCount;if(s.muteCount){s.mutes=(AutoMute46*)extmem_malloc(s.muteCount*sizeof(AutoMute46));if(!s.mutes){moveFree939(s);return false;}uint16_t j=0;for(uint16_t i=0;i<autoMuteCount46;++i)if(autoMutes46[i].track==t&&autoMutes46[i].pattern==s.pattern)s.mutes[j++]=autoMutes46[i];}
+ s.notes=(MoveNote939*)extmem_malloc(max((size_t)1,s.count*sizeof(MoveNote939)));s.locks=(NoteLock817*)extmem_malloc(max((size_t)1,s.lockCount*sizeof(NoteLock817)));if(!s.notes||!s.locks){moveFree939(s);return false;}uint16_t n=0;bool range=selectionHasActiveNotes();
+ for(uint16_t k=0;k<trackStepCount(t);++k)for(uint8_t v=0;v<noteCountAtStep(t,k);++v){auto&r=s.notes[n++];memset(&r,0,sizeof(r));captureNoteRecord(t,k,v,r.event);r.tick=(int32_t)k*96+logicalMicroTick(t,k,v);r.selected=range?selectedNoteObject(t,k,v):selectedStep==k&&selectedVoice==v;}
+ n=0;for(uint16_t i=0;i<lockCount817;++i)if(noteLocks817[i].track==t&&noteLocks817[i].pattern==s.pattern)s.locks[n++]=noteLocks817[i];return true;}
+FLASHMEM bool moveRestore939(const MoveSnapshot939&s,bool select){if(s.track>=16||activePattern[s.track]!=s.pattern)return false;uint16_t other=0;for(uint16_t i=0;i<lockCount817;++i)if(noteLocks817[i].track!=s.track||noteLocks817[i].pattern!=s.pattern)++other;if(other+s.lockCount>LOCK_CAPACITY817)return false;
+ unsigned otherMutes=0;for(uint16_t i=0;i<autoMuteCount46;++i)otherMutes+=autoMutes46[i].track!=s.track||autoMutes46[i].pattern!=s.pattern;if(otherMutes+s.muteCount>AUTO_MUTES46)return false;
+ lockMoving817=true;for(uint16_t k=0;k<trackStepCount(s.track);++k)clearTrackStep(s.track,k);bool installed=true;for(uint16_t i=0;i<s.count;++i)installed=movePlace939(s.track,s.notes[i].event)&&installed;lockMoving817=false;
+ lockClearPattern817(s.track,s.pattern);for(uint16_t i=0;i<s.lockCount;++i)noteLocks817[lockCount817++]=s.locks[i];moveInternal41=true;clearStepSelection();moveInternal41=false;selectedStep=selectedFineIndex=-1;explicitNoteSelection=select;
+ if(select)for(uint16_t i=0;i<s.count;++i)if(s.notes[i].selected){uint16_t step=s.notes[i].event.step;int16_t micro=s.notes[i].event.logicalMicro;int8_t voice=findVoiceAtExactTick(s.track,step,s.notes[i].event.note,micro);if(voice>=0)setNoteObjectSelected(s.track,step,voice,true);}
+ for(uint16_t i=0;i<autoMuteCount46;)if(autoMutes46[i].track==s.track&&autoMutes46[i].pattern==s.pattern)autoMutes46[i]=autoMutes46[--autoMuteCount46];else ++i;for(uint16_t i=0;i<s.muteCount;++i)autoMutes46[autoMuteCount46++]=s.mutes[i];invalidateStepTriggers();neoDisplayDirty=displayValueDirty=true;return installed;}
+FLASHMEM bool moveMatches939(const MoveSnapshot939&a,const MoveSnapshot939&b){if(a.count!=b.count||a.lockCount!=b.lockCount||a.muteCount!=b.muteCount)return false;for(uint16_t i=0;i<a.muteCount;++i)if(memcmp(a.mutes+i,b.mutes+i,sizeof(AutoMute46)))return false;for(uint16_t i=0;i<a.count;++i)if(a.notes[i].tick!=b.notes[i].tick||!sameNoteRecord(a.notes[i].event,b.notes[i].event))return false;return !a.lockCount||!memcmp(a.locks,b.locks,a.lockCount*sizeof(NoteLock817));}
+FLASHMEM bool moveHistory939(bool redo){auto&expected=redo?moveBefore939:moveAfter939;auto&target=redo?moveAfter939:moveBefore939;if(!expected.notes||expected.track!=selectedTrack||expected.pattern!=activePattern[selectedTrack]||redo!=moveUndone939)return false;MoveSnapshot939 now;if(!moveCapture939(selectedTrack,now))return false;bool matches=moveMatches939(now,expected);moveFree939(now);if(!matches){moveFree939(moveBefore939);moveFree939(moveAfter939);return false;}if(!moveRestore939(target,false))return true;moveUndone939=!redo;moveValue939=0;DISPLAY_SERIAL.println(redo?"MSG|REDO MOVE":"MSG|UNDO MOVE");return true;}
+FLASHMEM uint16_t moveCircular939(uint8_t t,int32_t delta){if(t>=16||!delta)return 0;commitPendingSelectionEdit();int32_t length=trackSequenceTicks(t);delta%=length;if(!delta){moveValue939=0;return 0;}MoveSnapshot939 before;if(!moveCapture939(t,before)){DISPLAY_SERIAL.println("MSG|MOVE MEMORY FULL");return 0;}uint16_t moved=0;for(uint16_t i=0;i<before.count;++i)if(before.notes[i].selected)++moved;if(!moved){moveFree939(before);return 0;}
+ MoveSnapshot939 draft;if(!moveCapture939(t,draft)){moveFree939(before);return 0;}for(uint16_t i=0;i<draft.count;++i)if(draft.notes[i].selected){int32_t old=draft.notes[i].tick,dest=((old+delta)%length+length)%length;draft.notes[i].tick=dest;uint16_t ds;int16_t dm;tickToStepAndMicro(t,dest,ds,dm);draft.notes[i].event.step=ds;draft.notes[i].event.logicalMicro=dm;for(uint16_t j=0;j<draft.muteCount;++j)if(before.mutes[j].identity==old&&before.mutes[j].note==draft.notes[i].event.note){autoShiftScope49(draft.mutes[j],dest-old,length);draft.mutes[j].identity=dest;}for(uint16_t j=0;j<draft.lockCount;++j)if(before.locks[j].tick==old&&before.locks[j].note==draft.notes[i].event.note)draft.locks[j].tick=dest;}
+ // Reject destination collisions before changing the composition.
+ for(uint16_t i=0;i<draft.count;++i)for(uint16_t j=0;j<i;++j)if((draft.notes[i].selected||draft.notes[j].selected)&&draft.notes[i].tick==draft.notes[j].tick&&(trackPlayMode[linkOwner12(t,LINK_POLY12)]==TRACK_PLAY_MONO||draft.notes[i].event.note==draft.notes[j].event.note)){moveFree939(draft);moveFree939(before);DISPLAY_SERIAL.println("MSG|MOVE NOTE COLLISION");return 0;}
+ bool ok=moveRestore939(draft,true);MoveSnapshot939 after;if(!ok||!moveCapture939(t,after)||after.count!=before.count){moveRestore939(before,true);moveFree939(after);moveFree939(draft);moveFree939(before);DISPLAY_SERIAL.println("MSG|MOVE CAPACITY");return 0;}
+ if(!moveTransaction41){moveFree939(moveBefore939);moveBefore939=before;moveTransaction41=true;}else moveFree939(before);moveFree939(moveAfter939);moveAfter939=after;moveUndone939=false;moveValue939=(moveValue939+delta)%length;moveFree939(draft);return moved;}
+
+
+
+FLASHMEM void moveFinish41(bool commit){if(moveInternal41)return;if(moveTransaction41){moveTransaction41=false;if(!commit){moveRestore939(moveBefore939,false);moveFree939(moveBefore939);moveFree939(moveAfter939);}}moveValue939=0;moveUnitShown40=false;}
+FLASHMEM void moveEdit40(int32_t delta){moveUnitShown40=false;delta*=moveFine40?1:moveTicks42[moveUnit42];
+ if(patternMode&&selectedPatternCount())pattern805Edit(6,delta);
+ else if(selectionHasActiveNotes()||currentEditIsPLock())moveSelectedNotesByTicks(selectedTrack,delta);
+ else {defaultMov41[selectedTrack][0]=ZCLAMP57(defaultMov41[selectedTrack][0],delta,-98303,98303);storageDirty931=true;++modEpoch805;invalidateStepTriggers();}
+ char detail41[12];moveText40(detail41);if(strlen(detail41)>4)DISPLAY_SERIAL.printf("MSG|MOV %s\n",detail41);
+ neoDisplayDirty=displayValueDirty=true;
+}
+FLASHMEM void moveText40(char*out){if(moveUnitShown40){const char*units42[]={"1/1","1/4","1/16","tick"};strcpy(out,moveFine40?"fin":units42[moveUnit42]);return;}if(patternMode&&selectedPatternCount()){
+  bool found41=false;int first41=0;for(uint8_t t=0;t<16;++t)for(uint8_t p=0;p<16;++p)if(patternSelected[t][p]){
+   int value41=0;if(p==activePattern[t])value41=defaultMov41[t][0];else if(patternDirty805[t][p]){if(!unpackPattern906(patterns906[t][p],patternWork906)){strcpy(out,"ERR");return;}value41=patternWork906.mov[0];}else {strcpy(out,"---");return;}
+   if(found41&&value41!=first41){strcpy(out,"---");return;}found41=true;first41=value41;
+  }snprintf(out,12,"%+d",first41);return;
+ }int v=(selectionHasActiveNotes()||currentEditIsPLock())?moveDisplay939():defaultMov41[selectedTrack][0];snprintf(out,12,"%+d",v);if(v){char unit[12];snprintf(unit,12,"%d",abs(v));musical937(unit,abs(v));int n=abs(v);if(n%96==0){int q=n%384==0?384:n%192==0?192:96;snprintf(out,12,"%c%d%c",v<0?'-':'+',n/q,q==384?0x12:q==192?0x13:0x14);}}}
+
+
+

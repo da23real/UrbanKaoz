@@ -1,0 +1,51 @@
+#pragma once
+int nrpnBase54(uint8_t,uint8_t,uint16_t,uint8_t,int);void nrpnPrevious54(uint8_t,uint8_t,uint16_t,uint8_t,int);bool nrpnIsMod54=false;int nrpnOffset54(uint8_t,uint8_t,uint16_t,uint8_t);
+static const uint8_t MOD_DEPTH810=14, MOD_PATCH810=15, MOD_PARAM811=16,MOD_TRACK21=17,MOD_CV46=26;
+void cvCollect46(int64_t);
+void cvDebugStart47();void cvDebugStop47();void cvDebugRender47();void cvDebugRoy47(uint8_t,int,bool);void cvDebugButton47(uint8_t);bool cvDebugValues47(uint16_t*);bool cvFineClick47(uint8_t,bool);
+static uint8_t cvDepthStep48=100,cvBaseStep48=100;void joyInput46(int,int,int,int);void recordService46();void recordButton46(bool);
+struct ModExtra810 {int8_t attackCurve,decayCurve,releaseCurve;uint8_t mode;uint16_t phase;};
+EXTMEM ModExtra810 modExtra810[64],fullExtra810[64];
+uint16_t ccGap810=2,ccBudget810=500;
+bool fullMigrateNeeded810=false;
+bool modDisplayDirty810=false,patchDisplayDirty810=false,graphDirty810=true;
+void midiOffer810(uint8_t channel,uint16_t object,int value,bool modulated=false);
+void midiNrpn810(uint8_t channel,uint16_t number,uint8_t bits,uint16_t value);
+void modRecall937(int track=-1);
+void modRemember937(uint8_t,uint16_t,int);
+void modReset937();
+void midiForce810(uint8_t channel,uint16_t object);
+void midiClearStats810();void midiCancel810(uint8_t channel,uint16_t object);void midiService810();void midiReset810();void midiStats810();
+void realtimeInit810();void realtimeService810();
+void midiConfig810();bool midiConfigRoy810(uint8_t roy,int32_t delta,bool click);void midiConfigRender810();
+float modDepth810(uint16_t key,uint8_t slot,int64_t at);
+bool modAcyclic810(uint16_t from,uint8_t slot,const ModRoute805&route);
+ModRoute805 modResolve810(ModRoute805 route);
+bool modTrackMidi43(const ModRoute805&r);bool modBaseEdit43(const ModRoute805&r,int delta,int&value,const char*&label);int modReference43(const ModRoute805&r);
+const char* modPatchName810(uint8_t track,uint8_t cc,bool shortName=false);
+uint8_t modPatchNext810(uint8_t track,uint8_t cc,int delta);
+void modExtraReset810(uint16_t key);void modMigrate810();
+float modValue810(const ModUnit805&m,uint8_t type,int64_t at,uint16_t key,int64_t latest,uint32_t gate,bool manual=false);
+void modPatternEvent810(uint8_t track,uint8_t pattern,int64_t at);
+void modRouteLabel810(const ModRoute805&r,char*out);
+void modFrame810(int64_t at);bool modRouteFields810(bool commit,uint8_t roy,int32_t delta=0);
+void modRouteRender810(char*title,char fields[4][12],char*description);
+uint16_t modTarget810(const ModRoute805&r);
+uint8_t modMode810(uint16_t key);int modLimit810(uint8_t kind);
+void modMigrateUnit810(ModUnit805&m,ModExtra810&e,bool lfo);
+bool modDisplay810();bool modKy810(uint8_t ky,int32_t delta);
+bool modGraphValid810(const ModUnit805*units);
+void checks810();
+bool modIsTarget811(const ModRoute805&r);
+uint8_t modParamCount811(uint16_t key);
+const char* modParamName811(uint16_t key,uint8_t param);
+int modExistingOutput811(uint16_t key,int current,int direction);
+float modLevelAt811(uint16_t key,int64_t at);
+void modStop811();
+bool modTargetBase06(const ModRoute805&,int,int&,const char*&);
+
+ModRoute805 modTrackDraft21(const int*,const ModRoute805&);bool modTrackBase21(const ModRoute805&,int,int&,const char*&);void modTrackFields21(const ModRoute805&,int*);void modTrackRender21(const int*,char (*)[12],char*);void modTrackCollect21(int64_t);
+
+struct PatchDef808;PatchDef808* blockPatchAt21(uint8_t,int,uint8_t&);
+
+ModRoute805 modTrackResolve21(ModRoute805);bool modTrackPending21();void modTrackStop21();
